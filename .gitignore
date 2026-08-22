@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.env
+venv/
+env/
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+*.pt
+*.bin
+*.onnx
+*.engine
+*.trt

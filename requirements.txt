@@ -1,0 +1,12 @@
+torch
+transformers
+datasets
+evaluate
+seqeval
+onnx
+onnxruntime
+neo4j
+fastapi
+uvicorn
+streamlit
+python-dotenv
