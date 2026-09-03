@@ -1,6 +1,6 @@
 import pandas as pd
 
-RAW_FILE = "data/raw/government_data_raw.xlsx.xlsx"
+RAW_FILE = "data/raw/government_data_raw.xlsx"
 PROCESSED_FILE = "data/processed/government_data_cleaned.xlsx"
 
 df = pd.read_excel(RAW_FILE)
