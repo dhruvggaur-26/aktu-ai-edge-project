@@ -1,34 +1,115 @@
-import pandas as pd
+import json
+from pathlib import Path
+
 from transformers import AutoTokenizer
 
-CLEANED_FILE = "data/processed/government_data_cleaned.xlsx"
+
+INPUT_FILE = "data/processed/government_data_language.jsonl"
+
 MODEL_PATH = "models/pytorch/indic_ner_final/indic_ner_final"
 
-df = pd.read_excel(CLEANED_FILE)
-
-tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-def tokenize_text(text):
-    return tokenizer.tokenize(text)
+OUTPUT_FILE = "data/final/government_data_tokenized.jsonl"
 
 
-df["Tokens"] = df["Text"].apply(tokenize_text)
+def load_records():
+    records = []
 
-print("\nFull dataset tokenization completed.")
+    with open(
+        INPUT_FILE,
+        "r",
+        encoding="utf-8"
+    ) as file:
 
-for _, row in df.iterrows():
-    print(f"{row['ID']}: {len(row['Tokens'])} tokens")
-import json
+        for line in file:
 
-FINAL_FILE = "data/final/government_data_tokenized.jsonl"
+            if line.strip():
+                records.append(
+                    json.loads(line)
+                )
 
-with open(FINAL_FILE, "w", encoding="utf-8") as file:
-    for _, row in df.iterrows():
-        record = row.to_dict()
+    return records
 
-        for key, value in record.items():
-            if isinstance(value, pd.Timestamp):
-                record[key] = value.strftime("%Y-%m-%d")
 
-        file.write(json.dumps(record, ensure_ascii=False) + "\n")
+def tokenize_records(records):
 
-print("\nFinal tokenized dataset saved to:", FINAL_FILE)
+    print("Loading tokenizer...")
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        MODEL_PATH
+    )
+
+    print("Tokenizer loaded.")
+
+    for record in records:
+
+        text = record.get("Text", "")
+
+        # Convert text into tokenizer subword tokens
+        tokens = tokenizer.tokenize(text)
+
+        record["Tokens"] = tokens
+
+    return records
+
+
+def save_records(records):
+
+    Path(
+        "data/final"
+    ).mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    with open(
+        OUTPUT_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        for record in records:
+
+            file.write(
+                json.dumps(
+                    record,
+                    ensure_ascii=False
+                ) + "\n"
+            )
+
+
+def main():
+
+    print("Loading language-detected dataset...")
+
+    records = load_records()
+
+    print(
+        "Records loaded:",
+        len(records)
+    )
+
+    records = tokenize_records(
+        records
+    )
+
+    print("\nTokenization completed.")
+
+    print("\nToken counts:")
+
+    for record in records:
+
+        print(
+            f"{record['ID']}: "
+            f"{len(record['Tokens'])} tokens"
+        )
+
+    save_records(records)
+
+    print(
+        "\nFinal tokenized dataset saved to:",
+        OUTPUT_FILE
+    )
+
+
+if __name__ == "__main__":
+    main()

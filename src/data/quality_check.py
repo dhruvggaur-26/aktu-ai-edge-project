@@ -1,13 +1,10 @@
 import json
 
+
 FINAL_FILE = "data/final/government_data_tokenized.jsonl"
 
-with open(FINAL_FILE, "r", encoding="utf-8") as file:
-    rows = [json.loads(line) for line in file]
 
-print("Total records:", len(rows))
-
-required_fields = [
+REQUIRED_FIELDS = [
     "ID",
     "Title",
     "Text",
@@ -17,55 +14,220 @@ required_fields = [
     "Category",
     "Department",
     "Date_collected",
+    "Detected_Language",
     "Tokens",
 ]
 
-missing_fields = []
 
-for row in rows:
-    for field in required_fields:
-        if field not in row:
-            missing_fields.append((row.get("ID"), field))
+def load_records():
 
-if not missing_fields:
-    print("All required fields are present.")
-else:
-    print("Missing fields:", missing_fields)
+    records = []
 
-duplicate_ids = [
-    row["ID"]
-    for row in rows
-    if sum(r["ID"] == row["ID"] for r in rows) > 1
-]
+    with open(
+        FINAL_FILE,
+        "r",
+        encoding="utf-8"
+    ) as file:
 
-if not duplicate_ids:
-    print("No duplicate IDs found.")
-else:
-    print("Duplicate IDs found:", set(duplicate_ids))
+        for line in file:
 
-empty_text = [
-    row["ID"]
-    for row in rows
-    if not str(row["Text"]).strip()
-]
+            if line.strip():
+                records.append(
+                    json.loads(line)
+                )
 
-if not empty_text:
-    print("No empty text records found.")
-else:
-    print("Empty text records:", empty_text)
+    return records
 
-empty_tokens = [
-    row["ID"]
-    for row in rows
-    if not row["Tokens"]
-]
 
-if not empty_tokens:
-    print("No empty token lists found.")
-else:
-    print("Empty token lists:", empty_tokens)
+def run_quality_check():
 
-print("\nToken counts:")
+    records = load_records()
 
-for row in rows:
-    print(f"{row['ID']}: {len(row['Tokens'])} tokens")
+    print(
+        "Total records:",
+        len(records)
+    )
+
+    # -----------------------------------------
+    # Required fields
+    # -----------------------------------------
+
+    missing_fields = []
+
+    for record in records:
+
+        for field in REQUIRED_FIELDS:
+
+            if field not in record:
+
+                missing_fields.append(
+                    (
+                        record.get("ID"),
+                        field
+                    )
+                )
+
+    if not missing_fields:
+
+        print(
+            "All required fields are present."
+        )
+
+    else:
+
+        print(
+            "Missing fields:",
+            missing_fields
+        )
+
+    # -----------------------------------------
+    # Duplicate IDs
+    # -----------------------------------------
+
+    ids = [
+        record.get("ID")
+        for record in records
+    ]
+
+    duplicate_ids = [
+        record_id
+        for record_id in set(ids)
+        if ids.count(record_id) > 1
+    ]
+
+    if not duplicate_ids:
+
+        print(
+            "No duplicate IDs found."
+        )
+
+    else:
+
+        print(
+            "Duplicate IDs found:",
+            duplicate_ids
+        )
+
+    # -----------------------------------------
+    # Empty text
+    # -----------------------------------------
+
+    empty_text = [
+        record.get("ID")
+        for record in records
+        if not str(
+            record.get("Text", "")
+        ).strip()
+    ]
+
+    if not empty_text:
+
+        print(
+            "No empty text records found."
+        )
+
+    else:
+
+        print(
+            "Empty text records:",
+            empty_text
+        )
+
+    # -----------------------------------------
+    # Empty tokens
+    # -----------------------------------------
+
+    empty_tokens = [
+        record.get("ID")
+        for record in records
+        if not record.get("Tokens")
+    ]
+
+    if not empty_tokens:
+
+        print(
+            "No empty token lists found."
+        )
+
+    else:
+
+        print(
+            "Empty token lists:",
+            empty_tokens
+        )
+
+    # -----------------------------------------
+    # Language consistency
+    # -----------------------------------------
+
+    language_mismatch = []
+
+    for record in records:
+
+        if (
+            record.get("Language")
+            != record.get("Detected_Language")
+        ):
+
+            language_mismatch.append(
+                (
+                    record.get("ID"),
+                    record.get("Language"),
+                    record.get("Detected_Language")
+                )
+            )
+
+    if not language_mismatch:
+
+        print(
+            "No language mismatches found."
+        )
+
+    else:
+
+        print(
+            "Language mismatches:",
+            language_mismatch
+        )
+
+    # -----------------------------------------
+    # Token statistics
+    # -----------------------------------------
+
+    token_counts = [
+        len(record["Tokens"])
+        for record in records
+        if isinstance(
+            record.get("Tokens"),
+            list
+        )
+    ]
+
+    if token_counts:
+
+        print("\nToken statistics:")
+
+        print(
+            "Minimum tokens:",
+            min(token_counts)
+        )
+
+        print(
+            "Maximum tokens:",
+            max(token_counts)
+        )
+
+        print(
+            "Average tokens:",
+            round(
+                sum(token_counts)
+                / len(token_counts),
+                2
+            )
+        )
+
+    print("\nQuality check completed.")
+
+
+if __name__ == "__main__":
+    run_quality_check()
