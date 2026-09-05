@@ -1,208 +1,187 @@
-# Project Progress Tracker
+# Project Progress
 
-Last Updated: 2026-09-01
+## Project
+AKTU AI Edge Project
 
----
-
-# Overall Project Status
-
-Current Phase: Module 1 — Data Ingestion
-
-Overall Status: IN PROGRESS
-
-Development Strategy:
-
-The complete team will work module-by-module. A module will be considered complete only after implementation, testing, verification, and team review.
+## Current Phase
+Module 1 — Data Ingestion Module
 
 ---
 
-# Module 1 — Data Ingestion
+# Module 1 — Data Ingestion Module
 
-## Status
+**Status:** Implementation Complete — Team Review Pending
 
-IN PROGRESS / UNDER AUDIT
+## Objective
 
-## Required Work
-
-- [ ] Identify required data sources
-- [ ] Collect textual data
-- [ ] Record source information
-- [ ] Validate collected data
-- [ ] Remove invalid/duplicate data
-- [ ] Clean textual data
-- [ ] Handle unwanted characters/noise
-- [ ] Detect language
-- [ ] Tokenize text
-- [ ] Define final dataset format
-- [ ] Prepare training/processing-ready dataset
-- [ ] Test complete ingestion pipeline
-- [ ] Document the pipeline
-
-## Existing Team Work
-
-One team member has reportedly collected data from multiple websites and other sources.
-
-The actual dataset is not currently available to all team members, so this work has NOT yet been independently verified.
-
-Action Required:
-
-- Obtain the collected dataset.
-- Inspect its format and contents.
-- Identify sources.
-- Check whether cleaning, validation, language detection, and tokenization have already been performed.
+The objective of Module 1 is to collect government-related textual data, validate and clean the data, detect language, tokenize the text, and prepare a structured dataset for downstream AI processing.
 
 ---
 
-# Module 2 — AI Analytics Engine
+## Completed Work
 
-## Status
+### 1. Raw Data Collection
 
-BASELINE EXISTS / NOT COMPLETE
+Two government-related sources were used for the initial dataset:
 
-### NER
+- myScheme
+- Press Information Bureau (PIB)
 
-- [x] Initial NER training script exists
-- [x] Trained NER model exists locally
-- [x] Model can be loaded
-- [x] NER inference works
-- [ ] Verify label mapping
-- [ ] Reproduce evaluation metrics
-- [ ] Perform proper test-set evaluation
-- [ ] Perform error analysis
-- [ ] Decide whether additional training data is required
-- [ ] Integrate final NER pipeline
+### 2. myScheme Dataset
 
-### Sentiment Analysis
+- Collected 5 government scheme records.
+- Stored the raw dataset in Excel format.
+- File:
 
-- [ ] Select approach/model
-- [ ] Prepare dataset
-- [ ] Implement training/inference
-- [ ] Evaluate
-- [ ] Integrate
+`data/raw/government_data_raw.xlsx`
 
-### Concept / Keyword / Key-Phrase Extraction
+### 3. PIB Dataset
 
-- [ ] Decide approach
-- [ ] Implement
-- [ ] Test
-- [ ] Integrate
+- Collected 63 Hindi PIB press releases.
+- PIB release listing was processed using Playwright.
+- Release title, text, department, source URL, language, category, and collection date were extracted.
+- File:
 
-### Semantic Relationships
+`data/raw/pib_raw.jsonl`
 
-- [ ] Decide approach
-- [ ] Implement
-- [ ] Test
-- [ ] Integrate
+### 4. Common Schema
 
----
+Both datasets were verified to follow the same schema:
 
-# Module 3 — Knowledge Base Management
+- `ID`
+- `Title`
+- `Text`
+- `Source`
+- `Url`
+- `Language`
+- `Category`
+- `Department`
+- `Date_collected`
 
-## Status
+### 5. Dataset Merge
 
-NOT STARTED
+The two sources were merged into a single standardized dataset.
 
-- [ ] Define knowledge representation
-- [ ] Define entities
-- [ ] Define relationships
-- [ ] Select database/knowledge graph approach
-- [ ] Implement storage
-- [ ] Implement retrieval/search
-- [ ] Test knowledge-base pipeline
+Dataset size:
 
----
+- myScheme: 5 records
+- PIB: 63 records
+- Combined: 68 records
+- Unique IDs: 68
 
-# Module 4 — Interactive Analytics Dashboard
+Output:
 
-## Status
+`data/processed/government_data_combined.jsonl`
 
-NOT STARTED
+### 6. Data Validation
 
-- [ ] Define UI requirements
-- [ ] Create UI prototype
-- [ ] Create dashboard structure
-- [ ] Connect AI results
-- [ ] Add entity visualization
-- [ ] Add analytics
-- [ ] Add search/interactivity
-- [ ] Test dashboard
+Validation checks were implemented for:
 
----
+- Required columns/fields
+- Duplicate IDs
+- Missing values
+- URL format
+- Date validity
+- Dataset schema consistency
 
-# Module 5 — Edge Deployment & System Integration
+The combined dataset passed schema validation and duplicate ID checks.
 
-## Status
+### 7. Data Cleaning
 
-NOT STARTED
+A cleaning pipeline was implemented to:
 
-- [ ] Define target edge hardware
-- [ ] Prepare model for deployment
-- [ ] Explore ONNX conversion
-- [ ] Optimize inference
-- [ ] Integrate complete pipeline
-- [ ] Test on target hardware
-- [ ] Measure performance
-- [ ] End-to-end testing
+- Normalize whitespace
+- Normalize line breaks
+- Remove unnecessary spaces around punctuation
+- Remove leading and trailing whitespace
 
----
+Output:
 
-# Repository / Git Progress
+`data/processed/government_data_cleaned.jsonl`
 
-## Completed
+Total cleaned records:
 
-- [x] GitHub repository created
-- [x] Team collaborators added
-- [x] Local repository connected to GitHub
-- [x] Individual development branch created for Anubhav
-- [x] `anubhav-2` branch pushed to GitHub
-- [x] Python virtual environment created
-- [x] Required Python packages installed
-- [x] Existing NER model located locally
-- [x] Existing NER model successfully loaded
-- [x] Existing NER inference tested
+**68**
 
-## Current Branch
+### 8. Language Detection
 
-`anubhav-2`
+Automated language detection was implemented using `langdetect`.
 
-## Existing Feature Branch
+Results:
 
-`feature/nlp-ner-sentiment`
+- Total records: 68
+- Hindi (`hi`): 68
+- Other languages: 0
 
----
+Output:
 
-# Current Blockers
+`data/processed/government_data_language.jsonl`
 
-1. The actual dataset collected by the team member is not currently available to the entire team.
-2. The exact preprocessing performed on that dataset is unknown.
-3. The reported NER F1 score has not yet been independently reproduced.
-4. Sentiment implementation is not currently present in the inspected NLP branch.
+### 9. Tokenization
 
----
+The cleaned government text was tokenized using the project's IndicBERT tokenizer.
 
-# Immediate Next Tasks
+Tokenizer path:
 
-1. Obtain the collected dataset from the team member.
-2. Inspect dataset structure and source information.
-3. Audit Module 1 against the project requirements.
-4. Build/fix the Data Ingestion pipeline.
-5. Test the pipeline.
-6. Commit and push Module 1 work.
-7. Review and merge the completed Module 1 work.
-8. Move to Module 2.
+`models/pytorch/indic_ner_final/indic_ner_final`
+
+Tokenization was successfully completed for all 68 records.
+
+Output:
+
+`data/final/government_data_tokenized.jsonl`
+
+### 10. Final Quality Check
+
+The final tokenized dataset was checked for:
+
+- Required fields
+- Duplicate IDs
+- Empty text
+- Empty token lists
+- Language mismatches
+- Token statistics
+
+Validation results:
+
+- Total records: **68**
+- Unique IDs: **68**
+- Empty text records: **0**
+- Empty token lists: **0**
+- Language mismatches: **0**
+- Hindi records: **68**
 
 ---
 
-# Change Log
+# Module 1 Data Pipeline
 
-## 2026-09-01
-
-- Git collaboration setup verified.
-- `anubhav-2` branch verified.
-- Existing `feature/nlp-ner-sentiment` branch inspected.
-- Existing NER training and demo code identified.
-- Existing trained NER model located locally.
-- Model loading successfully verified.
-- NER inference successfully verified.
-- Initial model-quality concerns identified.
-- Module-by-module development strategy established.
+```text
+Government Sources
+       |
+       +-------------------+
+       |                   |
+    myScheme              PIB
+    5 records           63 records
+       |                   |
+       +---------+---------+
+                 |
+                 v
+        Dataset Merge
+                 |
+                 v
+          68 Records
+                 |
+                 v
+             Cleaning
+                 |
+                 v
+        Language Detection
+                 |
+                 v
+           Tokenization
+                 |
+                 v
+          Quality Check
+                 |
+                 v
+          Final Dataset
