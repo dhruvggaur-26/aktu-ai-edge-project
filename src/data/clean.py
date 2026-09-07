@@ -31,7 +31,7 @@ def clean_text(text):
     text = re.sub(r"\s+", " ", text)
 
     # Remove unnecessary spaces around punctuation
-    text = re.sub(r"\s+([,.!?;:])", r"\1", text)
+    text = re.sub(r"\s+([,.!?;:।॥])", r"\1", text)
 
     # Remove leading/trailing whitespace
     text = text.strip()

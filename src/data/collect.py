@@ -1,8 +1,9 @@
-from playwright.sync_api import sync_playwright
+import requests
 from bs4 import BeautifulSoup
 from html import unescape
 from pathlib import Path
 from datetime import date
+from urllib.parse import urljoin
 import json
 
 
@@ -17,333 +18,617 @@ def build_release_url(href):
     Convert relative PIB links into absolute URLs.
     """
 
-    if href.startswith("http://") or href.startswith("https://"):
-        return href
-
-    if href.startswith("/"):
-        return BASE_URL + href
-
-    return BASE_URL + "/" + href.lstrip("/")
+    return urljoin(
+        BASE_URL,
+        href
+    )
 
 
-def extract_release(context, release_url):
+def get_hidden_fields(soup):
     """
-    Extract title, department and text from one PIB release.
+    Extract ASP.NET hidden form fields.
     """
 
-    detail_page = context.new_page()
+    data = {}
 
-    try:
-        print("Opening release page...")
+    for element in soup.select(
+        'input[type="hidden"]'
+    ):
 
-        detail_page.goto(
-            release_url,
-            timeout=60000,
-            wait_until="domcontentloaded"
+        name = element.get("name")
+
+        if name:
+
+            data[name] = element.get(
+                "value",
+                ""
+            )
+
+    return data
+
+
+def load_existing_ids():
+    """
+    Load IDs already present in the raw PIB dataset.
+    """
+
+    existing_ids = set()
+
+    output_path = Path(OUTPUT_FILE)
+
+    if not output_path.exists():
+        return existing_ids
+
+    with open(
+        output_path,
+        "r",
+        encoding="utf-8"
+    ) as file:
+
+        for line in file:
+
+            line = line.strip()
+
+            if not line:
+                continue
+
+            try:
+
+                record = json.loads(line)
+
+                record_id = record.get("ID")
+
+                if record_id:
+
+                    existing_ids.add(
+                        str(record_id)
+                    )
+
+            except json.JSONDecodeError:
+
+                print(
+                    "WARNING: Invalid JSON line skipped."
+                )
+
+    return existing_ids
+
+
+def extract_release(session, release_url, headers):
+    """
+    Extract title, department and text
+    from one PIB release using requests.
+    """
+
+    # -----------------------------------------
+    # Release page
+    # -----------------------------------------
+
+    response = session.get(
+        release_url,
+        headers=headers,
+        timeout=30
+    )
+
+    response.raise_for_status()
+
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser"
+    )
+
+    # -----------------------------------------
+    # Find iframe
+    # -----------------------------------------
+
+    iframe = soup.find("iframe")
+
+    if not iframe:
+
+        raise ValueError(
+            "Release iframe not found"
         )
 
-        detail_page.wait_for_timeout(1500)
+    iframe_src = iframe.get("src")
 
-        # PIB release pages contain the actual content inside an iframe.
-        iframe = detail_page.locator("iframe").first
+    if not iframe_src:
 
-        if iframe.count() == 0:
-            raise ValueError("Release iframe not found")
+        raise ValueError(
+            "Iframe URL not found"
+        )
 
-        iframe_src = iframe.get_attribute("src")
+    iframe_url = build_release_url(
+        iframe_src
+    )
 
-        if not iframe_src:
-            raise ValueError("Iframe URL not found")
+    # -----------------------------------------
+    # Request iframe
+    # -----------------------------------------
 
-        iframe_url = build_release_url(iframe_src)
+    iframe_response = session.get(
+        iframe_url,
+        headers=headers,
+        timeout=30
+    )
 
-        print("Iframe URL:", iframe_url)
+    iframe_response.raise_for_status()
 
-        iframe_page = context.new_page()
+    iframe_soup = BeautifulSoup(
+        iframe_response.text,
+        "html.parser"
+    )
 
-        try:
-            iframe_page.goto(
-                iframe_url,
-                timeout=60000,
-                wait_until="domcontentloaded"
-            )
+    # -----------------------------------------
+    # Title
+    # -----------------------------------------
 
-            iframe_page.wait_for_timeout(1000)
+    title_element = iframe_soup.select_one(
+        "#ltrTitlee"
+    )
 
-            # Title
-            title_element = iframe_page.locator(
-                "#ltrTitlee"
-            )
+    title = ""
 
-            # Release description
-            description_element = iframe_page.locator(
-                "#ltrDescriptionn"
-            )
+    if title_element:
 
-            # Ministry / Department
-            ministry_element = iframe_page.locator(
-                "#MinistryName"
-            )
-
-            title = ""
-
-            if title_element.count() > 0:
-                title = (
-                    title_element
-                    .get_attribute("value")
-                    or ""
-                )
-
-            description_html = ""
-
-            if description_element.count() > 0:
-                description_html = (
-                    description_element
-                    .get_attribute("value")
-                    or ""
-                )
-
-            ministry = ""
-
-            if ministry_element.count() > 0:
-                ministry = ministry_element.inner_text()
-
-            # Decode HTML entities
-            description_html = unescape(
-                description_html
-            )
-
-            # Convert HTML description to plain text
-            text = BeautifulSoup(
-                description_html,
-                "html.parser"
-            ).get_text(
-                " ",
+        title = (
+            title_element.get("value")
+            or title_element.get_text(
                 strip=True
             )
-
-            # Extract PRID from URL
-            release_id = (
-                release_url
-                .split("PRID=")[-1]
-                .split("&")[0]
-            )
-
-            record = {
-                "ID": release_id,
-                "Title": title.strip(),
-                "Text": text,
-                "Source": "PIB",
-                "Url": release_url,
-                "Language": "hi",
-                "Category": "Press Release",
-                "Department": ministry.strip(),
-                "Date_collected": str(date.today()),
-            }
-
-            return record
-
-        finally:
-            iframe_page.close()
-
-    finally:
-        detail_page.close()
-
-
-def collect_releases():
-
-    with sync_playwright() as p:
-
-        browser = p.chromium.launch(
-            headless=False
         )
 
-        context = browser.new_context()
+    # -----------------------------------------
+    # Description
+    # -----------------------------------------
 
-        page = context.new_page()
+    description_element = (
+        iframe_soup.select_one(
+            "#ltrDescriptionn"
+        )
+    )
+
+    description_html = ""
+
+    if description_element:
+
+        description_html = (
+            description_element.get(
+                "value"
+            )
+            or ""
+        )
+
+    # -----------------------------------------
+    # Ministry
+    # -----------------------------------------
+
+    ministry_element = (
+        iframe_soup.select_one(
+            "#MinistryName"
+        )
+    )
+
+    ministry = ""
+
+    if ministry_element:
+
+        ministry = ministry_element.get_text(
+            " ",
+            strip=True
+        )
+
+    # -----------------------------------------
+    # Convert HTML description to text
+    # -----------------------------------------
+
+    description_html = unescape(
+        description_html
+    )
+
+    text = BeautifulSoup(
+        description_html,
+        "html.parser"
+    ).get_text(
+        " ",
+        strip=True
+    )
+
+    # -----------------------------------------
+    # Extract PRID
+    # -----------------------------------------
+
+    release_id = (
+        release_url
+        .split("PRID=")[-1]
+        .split("&")[0]
+    )
+
+    # -----------------------------------------
+    # Create record
+    # -----------------------------------------
+
+    record = {
+        "ID": release_id,
+        "Title": title.strip(),
+        "Text": text,
+        "Source": "PIB",
+        "Url": release_url,
+        "Language": "hi",
+        "Category": "Press Release",
+        "Department": ministry.strip(),
+        "Date_collected": str(date.today()),
+    }
+
+    return record
+
+
+def collect_releases(day="1", month=None, year=None):
+    """
+    Collect Hindi PIB releases for the
+    selected day, month and year.
+
+    Existing records are preserved.
+    Records with duplicate IDs are skipped.
+    """
+
+    # -----------------------------------------
+    # Set default month and year
+    # -----------------------------------------
+
+    if month is None:
+
+        month = date.today().month
+
+    if year is None:
+
+        year = date.today().year
+
+    session = requests.Session()
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    # -----------------------------------------
+    # STEP 1: Initial GET
+    # -----------------------------------------
+
+    print(
+        "Opening PIB release page..."
+    )
+
+    response = session.get(
+        LIST_URL,
+        headers=headers,
+        timeout=30
+    )
+
+    response.raise_for_status()
+
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser"
+    )
+
+    # -----------------------------------------
+    # STEP 2: Extract ASP.NET fields
+    # -----------------------------------------
+
+    data = get_hidden_fields(
+        soup
+    )
+
+    # -----------------------------------------
+    # STEP 3: Trigger date postback
+    # -----------------------------------------
+
+    print(
+        "Triggering PIB date postback..."
+    )
+
+    print(
+        f"Selected date: {day}-{month}-{year}"
+    )
+
+    data.update({
+
+        "ctl00$ContentPlaceHolder1$ddlday":
+            str(day),
+
+        "ctl00$ContentPlaceHolder1$ddlMonth":
+            str(month),
+
+        "ctl00$ContentPlaceHolder1$ddlYear":
+            str(year),
+
+        "__EVENTTARGET":
+            "ctl00$ContentPlaceHolder1$ddlday",
+
+        "__EVENTARGUMENT":
+            "",
+    })
+
+    post_response = session.post(
+        LIST_URL,
+        data=data,
+        headers={
+            **headers,
+            "Referer": LIST_URL,
+            "Content-Type":
+                "application/x-www-form-urlencoded"
+        },
+        timeout=30
+    )
+
+    post_response.raise_for_status()
+
+    post_soup = BeautifulSoup(
+        post_response.text,
+        "html.parser"
+    )
+
+    # -----------------------------------------
+    # STEP 4: Collect release URLs
+    # -----------------------------------------
+
+    links = post_soup.select(
+        'a[href*="PressReleaseDetail.aspx"], '
+        'a[href*="PressReleasePage.aspx"]'
+    )
+
+    release_urls = []
+
+    for link in links:
+
+        href = link.get("href")
+
+        if not href:
+            continue
+
+        release_url = build_release_url(
+            href
+        )
+
+        if release_url not in release_urls:
+
+            release_urls.append(
+                release_url
+            )
+
+    print(
+        "Release links found:",
+        len(release_urls)
+    )
+
+    # -----------------------------------------
+    # STEP 5: Create output directory
+    # -----------------------------------------
+
+    Path("data/raw").mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    # -----------------------------------------
+    # STEP 6: Load existing IDs
+    # -----------------------------------------
+
+    existing_ids = load_existing_ids()
+
+    print(
+        "Existing records found:",
+        len(existing_ids)
+    )
+
+    records = []
+
+    skipped_records = 0
+
+    # -----------------------------------------
+    # STEP 7: Extract releases
+    # -----------------------------------------
+
+    for index, release_url in enumerate(
+        release_urls,
+        start=1
+    ):
+
+        print(
+            f"\n[{index}/{len(release_urls)}]"
+        )
+
+        print(
+            "URL:",
+            release_url
+        )
 
         try:
 
-            # -----------------------------------------
-            # STEP 1: Open PIB release listing page
-            # -----------------------------------------
-
-            print("Opening PIB release page...")
-
-            page.goto(
-                LIST_URL,
-                timeout=60000,
-                wait_until="domcontentloaded"
+            record = extract_release(
+                session,
+                release_url,
+                headers
             )
 
-            page.wait_for_timeout(3000)
+            # ---------------------------------
+            # Duplicate ID check
+            # ---------------------------------
 
-            # -----------------------------------------
-            # STEP 2: Trigger date selection/postback
-            # -----------------------------------------
-
-            print("Triggering PIB date postback...")
-
-            page.select_option(
-                "#ContentPlaceHolder1_ddlday",
-                "1"
-            )
-
-            page.wait_for_timeout(5000)
-
-            # -----------------------------------------
-            # STEP 3: Collect release links
-            # -----------------------------------------
-
-            links = page.locator(
-                'a[href*="PressReleaseDetail.aspx"], '
-                'a[href*="PressReleasePage.aspx"]'
-            )
-
-            print(
-                "Release links found:",
-                links.count()
-            )
-
-            release_urls = []
-
-            for link in links.all():
-
-                href = link.get_attribute("href")
-
-                if not href:
-                    continue
-
-                release_url = build_release_url(
-                    href
-                )
-
-                if release_url not in release_urls:
-                    release_urls.append(
-                        release_url
-                    )
-
-            print(
-                "Unique release URLs:",
-                len(release_urls)
-            )
-
-            # -----------------------------------------
-            # STEP 4: Create output directory
-            # -----------------------------------------
-
-            Path("data/raw").mkdir(
-                parents=True,
-                exist_ok=True
-            )
-
-            records = []
-
-            # -----------------------------------------
-            # STEP 5: Extract every release
-            # -----------------------------------------
-
-            for index, release_url in enumerate(
-                release_urls,
-                start=1
-            ):
+            if record["ID"] in existing_ids:
 
                 print(
-                    f"\n[{index}/{len(release_urls)}]"
+                    "SKIPPED: Record already exists:",
+                    record["ID"]
                 )
 
-                print(
-                    "URL:",
-                    release_url
+                skipped_records += 1
+
+                continue
+
+            # ---------------------------------
+            # Basic validation
+            # ---------------------------------
+
+            if not record["Title"]:
+
+                raise ValueError(
+                    "Title not extracted"
                 )
 
-                try:
+            if not record["Text"]:
 
-                    record = extract_release(
-                        context,
-                        release_url
-                    )
+                raise ValueError(
+                    "Text not extracted"
+                )
 
-                    # Basic validation
-                    if not record["Title"]:
-                        raise ValueError(
-                            "Title not extracted"
-                        )
+            records.append(
+                record
+            )
 
-                    if not record["Text"]:
-                        raise ValueError(
-                            "Text not extracted"
-                        )
+            # Add new ID immediately
+            # to protect against duplicates
+            # within the same collection.
 
-                    records.append(record)
-
-                    print(
-                        "Collected:",
-                        record["Title"][:100]
-                    )
-
-                    print(
-                        "Department:",
-                        record["Department"]
-                    )
-
-                    print(
-                        "Text length:",
-                        len(record["Text"])
-                    )
-
-                except Exception as error:
-
-                    print(
-                        "FAILED:",
-                        error
-                    )
-
-            # -----------------------------------------
-            # STEP 6: Save raw dataset
-            # -----------------------------------------
-
-            with open(
-                OUTPUT_FILE,
-                "w",
-                encoding="utf-8"
-            ) as file:
-
-                for record in records:
-
-                    file.write(
-                        json.dumps(
-                            record,
-                            ensure_ascii=False
-                        ) + "\n"
-                    )
-
-            # -----------------------------------------
-            # STEP 7: Final summary
-            # -----------------------------------------
-
-            print("\n--------------------------------")
-
-            print(
-                "Raw PIB dataset saved to:",
-                OUTPUT_FILE
+            existing_ids.add(
+                record["ID"]
             )
 
             print(
-                "Total records collected:",
-                len(records)
+                "Collected:",
+                record["Title"][:100]
             )
 
             print(
-                "Failed records:",
-                len(release_urls) - len(records)
+                "Department:",
+                record["Department"]
             )
 
-        finally:
+            print(
+                "Text length:",
+                len(record["Text"])
+            )
 
-            context.close()
-            browser.close()
+        except Exception as error:
+
+            print(
+                "FAILED:",
+                error
+            )
+
+    # -----------------------------------------
+    # STEP 8: Append only new records
+    # -----------------------------------------
+
+    with open(
+        OUTPUT_FILE,
+        "a",
+        encoding="utf-8"
+    ) as file:
+
+        for record in records:
+
+            file.write(
+                json.dumps(
+                    record,
+                    ensure_ascii=False
+                ) + "\n"
+            )
+
+    # -----------------------------------------
+    # STEP 9: Final summary
+    # -----------------------------------------
+
+    print(
+        "\n--------------------------------"
+    )
+
+    print(
+        "Raw PIB dataset updated:",
+        OUTPUT_FILE
+    )
+
+    print(
+        "New records added:",
+        len(records)
+    )
+
+    print(
+        "Duplicate records skipped:",
+        skipped_records
+    )
+
+    print(
+        "Failed records:",
+        len(release_urls)
+        - len(records)
+        - skipped_records
+    )
+
+    print(
+        "Total records now in dataset:",
+        len(load_existing_ids())
+    )
+
+
+def collect_date_range(
+    start_day,
+    end_day,
+    month,
+    year
+):
+    """
+    Collect PIB releases for every day
+    between start_day and end_day.
+    """
+
+    print(
+        "\n================================"
+    )
+
+    print(
+        "PIB DATE RANGE COLLECTION"
+    )
+
+    print(
+        "================================"
+    )
+
+    print(
+        f"Date range: "
+        f"{start_day}-{month}-{year}"
+        f" to "
+        f"{end_day}-{month}-{year}"
+    )
+
+    for day in range(
+        int(start_day),
+        int(end_day) + 1
+    ):
+
+        print(
+            "\n================================"
+        )
+
+        print(
+            f"Processing date: "
+            f"{day}-{month}-{year}"
+        )
+
+        print(
+            "================================"
+        )
+
+        collect_releases(
+            day=str(day),
+            month=str(month),
+            year=str(year)
+        )
 
 
 if __name__ == "__main__":
-    collect_releases()
+
+    collect_date_range(
+        start_day=1,
+        end_day=2,
+        month=9,
+        year=2026
+    )

@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 
 
 FINAL_FILE = "data/final/government_data_tokenized.jsonl"
@@ -84,15 +85,14 @@ def run_quality_check():
     # Duplicate IDs
     # -----------------------------------------
 
-    ids = [
-        record.get("ID")
-        for record in records
-    ]
+    ids = [record.get("ID") for record in records]
+
+    id_counts = Counter(ids)
 
     duplicate_ids = [
         record_id
-        for record_id in set(ids)
-        if ids.count(record_id) > 1
+        for record_id, count in id_counts.items()
+        if count > 1
     ]
 
     if not duplicate_ids:
@@ -107,7 +107,6 @@ def run_quality_check():
             "Duplicate IDs found:",
             duplicate_ids
         )
-
     # -----------------------------------------
     # Empty text
     # -----------------------------------------
