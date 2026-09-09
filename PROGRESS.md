@@ -4,6 +4,7 @@
 AKTU AI Edge Project
 
 ## Current Phase
+
 Module 1 — Data Ingestion Module
 
 ---
@@ -37,8 +38,8 @@ Two government-related sources were used for the initial dataset:
 
 ### 3. PIB Dataset
 
-- Collected 63 Hindi PIB press releases.
-- PIB release listing was processed using Playwright.
+- Collected 103 Hindi PIB press releases.
+- PIB release listing was processed using requests and BeautifulSoup.
 - Release title, text, department, source URL, language, category, and collection date were extracted.
 - File:
 
@@ -65,9 +66,9 @@ The two sources were merged into a single standardized dataset.
 Dataset size:
 
 - myScheme: 5 records
-- PIB: 63 records
-- Combined: 68 records
-- Unique IDs: 68
+- PIB: 103 records
+- Combined: 108 records
+- Unique IDs: 108
 
 Output:
 
@@ -84,7 +85,7 @@ Validation checks were implemented for:
 - Date validity
 - Dataset schema consistency
 
-The combined dataset passed schema validation and duplicate ID checks.
+The combined dataset passed validation checks with no duplicate IDs, missing values, invalid URLs, or invalid dates.
 
 ### 7. Data Cleaning
 
@@ -93,6 +94,7 @@ A cleaning pipeline was implemented to:
 - Normalize whitespace
 - Normalize line breaks
 - Remove unnecessary spaces around punctuation
+- Normalize punctuation
 - Remove leading and trailing whitespace
 
 Output:
@@ -101,7 +103,7 @@ Output:
 
 Total cleaned records:
 
-**68**
+**108**
 
 ### 8. Language Detection
 
@@ -109,8 +111,8 @@ Automated language detection was implemented using `langdetect`.
 
 Results:
 
-- Total records: 68
-- Hindi (`hi`): 68
+- Total records: 108
+- Hindi (`hi`): 108
 - Other languages: 0
 
 Output:
@@ -125,7 +127,7 @@ Tokenizer path:
 
 `models/pytorch/indic_ner_final/indic_ner_final`
 
-Tokenization was successfully completed for all 68 records.
+Tokenization was successfully completed for all 108 records.
 
 Output:
 
@@ -144,35 +146,41 @@ The final tokenized dataset was checked for:
 
 Validation results:
 
-- Total records: **68**
-- Unique IDs: **68**
+- Total records: **108**
+- Unique IDs: **108**
 - Empty text records: **0**
 - Empty token lists: **0**
 - Language mismatches: **0**
-- Hindi records: **68**
+- Hindi records: **108**
+- Minimum tokens per record: **47**
+- Maximum tokens per record: **3933**
+- Average tokens per record: **833.68**
+
+The final quality check completed successfully.
 
 ---
 
 # Module 1 Data Pipeline
 
 ```text
-Government Sources
-       |
+        Government Sources
+
+                 |
        +-------------------+
        |                   |
     myScheme              PIB
-    5 records           63 records
+    5 records           103 records
        |                   |
        +---------+---------+
                  |
                  v
-        Dataset Merge
+          Dataset Merge
                  |
                  v
-          68 Records
+            108 Records
                  |
                  v
-             Cleaning
+              Cleaning
                  |
                  v
         Language Detection
