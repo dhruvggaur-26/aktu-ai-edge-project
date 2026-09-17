@@ -2,10 +2,7 @@
 # HINDI NLP INFERENCE MODULE
 # ==================================================
 
-# Demo mode
-# Later, Member 3's actual ONNX inference code
-# will be connected here.
-
+import time
 
 MODEL_MODE = "DEMO"
 
@@ -16,48 +13,168 @@ MODEL_MODE = "DEMO"
 
 def predict(text):
 
-    # ----------------------------------------------
-    # DEMO INFERENCE
-    # ----------------------------------------------
+    start_time = time.time()
 
-    if MODEL_MODE == "DEMO":
+    text_lower = text.lower()
 
-        result = {
-            "entities": [
-                {
-                    "text": "राहुल",
-                    "label": "PERSON"
-                },
-                {
-                    "text": "दिल्ली",
-                    "label": "LOCATION"
-                }
-            ],
+    # ==================================================
+    # DEMO SENTIMENT KEYWORDS
+    # ==================================================
 
-            "sentiment": "Positive",
+    positive_words = [
+        "अच्छा",
+        "अच्छी",
+        "अच्छे",
+        "खुश",
+        "खुशी",
+        "पसंद",
+        "सुंदर",
+        "शानदार",
+        "बेहतरीन",
+        "बहुत अच्छा",
+        "बहुत अच्छी",
+        "सफल",
+        "सफलता",
+        "love",
+        "good",
+        "great"
+    ]
 
-            "confidence": 0.92,
+    negative_words = [
+        "बुरा",
+        "बुरी",
+        "बुरे",
+        "दुख",
+        "दुखी",
+        "नफरत",
+        "खराब",
+        "बेकार",
+        "समस्या",
+        "परेशान",
+        "असफल",
+        "असफलता",
+        "bad",
+        "hate",
+        "worst"
+    ]
 
-            "inference_time": 18
-        }
+    positive_count = sum(
+        1 for word in positive_words
+        if word in text_lower
+    )
 
-        return result
+    negative_count = sum(
+        1 for word in negative_words
+        if word in text_lower
+    )
 
 
-    # ----------------------------------------------
-    # FUTURE ONNX INFERENCE
-    # ----------------------------------------------
+    # ==================================================
+    # SENTIMENT DECISION
+    # ==================================================
+
+    if positive_count > negative_count:
+
+        sentiment = "Positive"
+        confidence = 0.92
+
+    elif negative_count > positive_count:
+
+        sentiment = "Negative"
+        confidence = 0.89
 
     else:
 
-        # Member 3's ONNX inference code
-        # will be added here.
+        sentiment = "Neutral"
+        confidence = 0.75
 
-        result = {
-            "entities": [],
-            "sentiment": "Neutral",
-            "confidence": 0.0,
-            "inference_time": 0
-        }
 
-        return result
+    # ==================================================
+    # DEMO ENTITY DETECTION
+    # ==================================================
+
+    known_people = [
+        "राहुल",
+        "अमन",
+        "रोहित",
+        "अमित",
+        "नेहा",
+        "पूजा"
+    ]
+
+    known_locations = [
+        "दिल्ली",
+        "मोरादाबाद",
+        "कानपुर",
+        "लखनऊ",
+        "आगरा",
+        "मुंबई",
+        "भारत",
+        "नोएडा"
+    ]
+
+    entities = []
+
+
+    # PERSON detection
+
+    for person in known_people:
+
+        if person in text:
+
+            entities.append(
+                {
+                    "text": person,
+                    "label": "PERSON"
+                }
+            )
+
+
+    # LOCATION detection
+
+    for location in known_locations:
+
+        if location in text:
+
+            entities.append(
+                {
+                    "text": location,
+                    "label": "LOCATION"
+                }
+            )
+
+
+    # ==================================================
+    # INFERENCE TIME
+    # ==================================================
+
+    inference_time = round(
+        (time.time() - start_time) * 1000,
+        2
+    )
+
+
+    # Avoid 0 ms in display
+
+    if inference_time < 1:
+
+        inference_time = 1
+
+
+    # ==================================================
+    # RESULT
+    # ==================================================
+
+    result = {
+
+        "entities": entities,
+
+        "sentiment": sentiment,
+
+        "confidence": confidence,
+
+        "inference_time": inference_time
+    }
+
+
+    return result

@@ -315,7 +315,7 @@ if analyze:
             ]
         )
 
-        st.bar_chart(chart_data)
+        # st.bar_chart(chart_data)
 
 
         # ==================================================
