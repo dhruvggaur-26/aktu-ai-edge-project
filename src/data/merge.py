@@ -4,9 +4,15 @@ from pathlib import Path
 import pandas as pd
 
 
+# Input files
 MYScheme_FILE = "data/raw/government_data_raw.xlsx"
 PIB_FILE = "data/raw/pib_raw.jsonl"
+PMINDIA_FILE = "data/raw/pmindia_hindi_raw.jsonl"
+NEWSONAIR_FILE = "data/raw/newsonair_hindi_raw.jsonl"
+DDNEWS_FILE = "data/raw/ddnews_hindi_raw.jsonl"
 
+
+# Output file
 OUTPUT_FILE = "data/processed/government_data_combined.jsonl"
 
 
@@ -37,11 +43,13 @@ def load_myscheme():
         )
 
     return df.to_dict(orient="records")
-def load_pib():
+
+
+def load_jsonl(file_path):
     records = []
 
     with open(
-        PIB_FILE,
+        file_path,
         "r",
         encoding="utf-8"
     ) as file:
@@ -75,7 +83,12 @@ def validate_schema(records, source_name):
 
 def merge_datasets():
 
+    # -------------------------------------------------
+    # Load myScheme
+    # -------------------------------------------------
+
     print("Loading myScheme dataset...")
+
     myscheme_records = load_myscheme()
 
     print(
@@ -83,13 +96,66 @@ def merge_datasets():
         len(myscheme_records)
     )
 
+
+    # -------------------------------------------------
+    # Load PIB
+    # -------------------------------------------------
+
     print("\nLoading PIB dataset...")
-    pib_records = load_pib()
+
+    pib_records = load_jsonl(PIB_FILE)
 
     print(
         "PIB records:",
         len(pib_records)
     )
+
+
+    # -------------------------------------------------
+    # Load PM India
+    # -------------------------------------------------
+
+    print("\nLoading PM India dataset...")
+
+    pmindia_records = load_jsonl(PMINDIA_FILE)
+
+    print(
+        "PM India records:",
+        len(pmindia_records)
+    )
+
+
+    # -------------------------------------------------
+    # Load News On AIR
+    # -------------------------------------------------
+
+    print("\nLoading News On AIR dataset...")
+
+    newsonair_records = load_jsonl(NEWSONAIR_FILE)
+
+    print(
+        "News On AIR records:",
+        len(newsonair_records)
+    )
+
+
+    # -------------------------------------------------
+    # Load DD News
+    # -------------------------------------------------
+
+    print("\nLoading DD News dataset...")
+
+    ddnews_records = load_jsonl(DDNEWS_FILE)
+
+    print(
+        "DD News records:",
+        len(ddnews_records)
+    )
+
+
+    # -------------------------------------------------
+    # Validate schemas
+    # -------------------------------------------------
 
     print("\nValidating schemas...")
 
@@ -103,14 +169,41 @@ def merge_datasets():
         "PIB"
     )
 
-    print("Schema validation passed.")
-
-    combined_records = (
-        myscheme_records +
-        pib_records
+    validate_schema(
+        pmindia_records,
+        "PM India"
     )
 
+    validate_schema(
+        newsonair_records,
+        "News On AIR"
+    )
+
+    validate_schema(
+        ddnews_records,
+        "DD News"
+    )
+
+    print("Schema validation passed.")
+
+
+    # -------------------------------------------------
+    # Combine all datasets
+    # -------------------------------------------------
+
+    combined_records = (
+        myscheme_records
+        + pib_records
+        + pmindia_records
+        + newsonair_records
+        + ddnews_records
+    )
+
+
+    # -------------------------------------------------
     # Check duplicate IDs
+    # -------------------------------------------------
+
     ids = [
         record["ID"]
         for record in combined_records
@@ -120,6 +213,11 @@ def merge_datasets():
         raise ValueError(
             "Duplicate IDs found in combined dataset."
         )
+
+
+    # -------------------------------------------------
+    # Print combined dataset statistics
+    # -------------------------------------------------
 
     print("\nCombined records:")
 
@@ -133,7 +231,11 @@ def merge_datasets():
         len(set(ids))
     )
 
+
+    # -------------------------------------------------
     # Create output directory
+    # -------------------------------------------------
+
     Path(
         "data/processed"
     ).mkdir(
@@ -141,7 +243,11 @@ def merge_datasets():
         exist_ok=True
     )
 
+
+    # -------------------------------------------------
     # Save combined dataset
+    # -------------------------------------------------
+
     with open(
         OUTPUT_FILE,
         "w",
@@ -162,6 +268,7 @@ def merge_datasets():
                     ensure_ascii=False
                 ) + "\n"
             )
+
 
     print(
         "\nCombined dataset saved to:",
