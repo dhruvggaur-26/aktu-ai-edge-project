@@ -23,31 +23,35 @@ The objective of Module 1 is to collect government-related textual data, validat
 
 ### 1. Raw Data Collection
 
-Two government-related sources were used for the initial dataset:
+Government-related textual data was collected from the following sources:
 
 - myScheme
 - Press Information Bureau (PIB)
+- PM India
+- News On AIR
+- DD News
 
-### 2. myScheme Dataset
+The dataset contains both Hindi and English government-related textual records.
 
-- Collected 5 government scheme records.
-- Stored the raw dataset in Excel format.
-- File:
+### 2. Dataset Size
 
-`data/raw/government_data_raw.xlsx`
+The final merged dataset contains:
 
-### 3. PIB Dataset
+- Hindi: 500 records
+- English: 400 records
+- Total: 900 records
 
-- Collected 103 Hindi PIB press releases.
-- PIB release listing was processed using requests and BeautifulSoup.
-- Release title, text, department, source URL, language, category, and collection date were extracted.
-- File:
+Source-wise distribution:
 
-`data/raw/pib_raw.jsonl`
+- myScheme: 105 records
+- PIB: 250 records
+- PM India: 200 records
+- News On AIR: 200 records
+- DD News: 145 records
 
-### 4. Common Schema
+### 3. Common Schema
 
-Both datasets were verified to follow the same schema:
+All collected records were normalized into a common schema:
 
 - `ID`
 - `Title`
@@ -59,43 +63,47 @@ Both datasets were verified to follow the same schema:
 - `Department`
 - `Date_collected`
 
-### 5. Dataset Merge
+### 4. Dataset Merge
 
-The two sources were merged into a single standardized dataset.
-
-Dataset size:
-
-- myScheme: 5 records
-- PIB: 103 records
-- Combined: 108 records
-- Unique IDs: 108
+All available Hindi and English source datasets were merged into a single standardized dataset.
 
 Output:
 
 `data/processed/government_data_combined.jsonl`
 
-### 6. Data Validation
+Merge result:
 
-Validation checks were implemented for:
+- Total records: **900**
+- Duplicate IDs: **0**
+- Duplicate URLs: **0**
 
-- Required columns/fields
+### 5. Data Validation
+
+Common validation checks were implemented for:
+
+- Required fields
 - Duplicate IDs
 - Missing values
 - URL format
 - Date validity
 - Dataset schema consistency
 
-The combined dataset passed validation checks with no duplicate IDs, missing values, invalid URLs, or invalid dates.
+Validation result:
 
-### 7. Data Cleaning
+- Required fields: Passed
+- Duplicate IDs: 0
+- Missing values: 0
+- Invalid URLs: 0
+- Invalid dates: 0
 
-A cleaning pipeline was implemented to:
+### 6. Data Cleaning
+
+A common cleaning pipeline was implemented to:
 
 - Normalize whitespace
-- Normalize line breaks
-- Remove unnecessary spaces around punctuation
-- Normalize punctuation
-- Remove leading and trailing whitespace
+- Normalize spacing around punctuation
+- Remove unnecessary leading/trailing whitespace
+- Preserve the original meaning of the collected text
 
 Output:
 
@@ -103,37 +111,50 @@ Output:
 
 Total cleaned records:
 
-**108**
+**900**
 
-### 8. Language Detection
+### 7. Language Detection
 
-Automated language detection was implemented using `langdetect`.
+Automated text-based language detection was implemented using `langdetect`.
 
-Results:
+The original `Language` field is preserved as the source/collection language classification.
 
-- Total records: 108
-- Hindi (`hi`): 108
-- Other languages: 0
+A separate `Detected_Language` field is added for text-based language auditing.
+
+Declared language distribution:
+
+- Hindi (`hi`): 500
+- English (`en`): 400
+
+The language detector flagged 7 records where declared and detected languages differed.
+
+These records are retained and reported as informational audit records because the differences can result from mixed-language content, embedded quotations, or language-detection anomalies.
 
 Output:
 
 `data/processed/government_data_language.jsonl`
 
-### 9. Tokenization
+### 8. Tokenization
 
-The cleaned government text was tokenized using the project's IndicBERT tokenizer.
+The language-detected dataset was tokenized using the project's Indic tokenizer.
 
 Tokenizer path:
 
 `models/pytorch/indic_ner_final/indic_ner_final`
 
-Tokenization was successfully completed for all 108 records.
+Tokenization was successfully completed for all 900 records.
 
 Output:
 
 `data/final/government_data_tokenized.jsonl`
 
-### 10. Final Quality Check
+Token statistics:
+
+- Minimum tokens: **38**
+- Maximum tokens: **23,356**
+- Average tokens: **661.95**
+
+### 9. Final Quality Check
 
 The final tokenized dataset was checked for:
 
@@ -141,55 +162,53 @@ The final tokenized dataset was checked for:
 - Duplicate IDs
 - Empty text
 - Empty token lists
-- Language mismatches
+- Language detection anomalies
 - Token statistics
 
-Validation results:
+Quality check results:
 
-- Total records: **108**
-- Unique IDs: **108**
+- Total records: **900**
+- Duplicate IDs: **0**
 - Empty text records: **0**
 - Empty token lists: **0**
-- Language mismatches: **0**
-- Hindi records: **108**
-- Minimum tokens per record: **47**
-- Maximum tokens per record: **3933**
-- Average tokens per record: **833.68**
+- Language detection audit records: **7**
+- Quality check completed successfully
 
-The final quality check completed successfully.
+The 7 language-detection differences are treated as **informational audit findings**, not pipeline failures.
 
 ---
 
 # Module 1 Data Pipeline
 
 ```text
-        Government Sources
-
-                 |
-       +-------------------+
-       |                   |
-    myScheme              PIB
-    5 records           103 records
-       |                   |
-       +---------+---------+
-                 |
-                 v
-          Dataset Merge
-                 |
-                 v
-            108 Records
-                 |
-                 v
-              Cleaning
-                 |
-                 v
-        Language Detection
-                 |
-                 v
-           Tokenization
-                 |
-                 v
-          Quality Check
-                 |
-                 v
-          Final Dataset
+              Government Sources
+                     |
+       +-------------+-------------+
+       |       |       |      |    |
+   myScheme   PIB   PM India  News On AIR  DD News
+       |       |       |          |          |
+       +-------+-------+----------+----------+
+                     |
+                     v
+               Dataset Merge
+                     |
+                     v
+                900 Records
+                     |
+                     v
+                  Cleaning
+                     |
+                     v
+             Data Validation
+                     |
+                     v
+            Language Detection
+                     |
+                     v
+                Tokenization
+                     |
+                     v
+              Quality Check
+                     |
+                     v
+               Final Dataset

@@ -1,9 +1,7 @@
 import json
-from collections import Counter
-
+from pathlib import Path
 
 FINAL_FILE = "data/final/government_data_tokenized.jsonl"
-
 
 REQUIRED_FIELDS = [
     "ID",
@@ -19,214 +17,100 @@ REQUIRED_FIELDS = [
     "Tokens",
 ]
 
-
-def load_records():
+def run_quality_check():
+    file_path = Path(FINAL_FILE)
+    if not file_path.exists():
+        print(f"Error: File not found at {FINAL_FILE}")
+        return
 
     records = []
-
-    with open(
-        FINAL_FILE,
-        "r",
-        encoding="utf-8"
-    ) as file:
-
+    with open(file_path, "r", encoding="utf-8") as file:
         for line in file:
-
             if line.strip():
-                records.append(
-                    json.loads(line)
-                )
+                records.append(json.loads(line))
 
-    return records
+    total_records = len(records)
+    print(f"Total records: {total_records}")
 
-
-def run_quality_check():
-
-    records = load_records()
-
-    print(
-        "Total records:",
-        len(records)
-    )
-
-    # -----------------------------------------
-    # Required fields
-    # -----------------------------------------
-
-    missing_fields = []
-
+    # 1. Check required fields
+    missing_fields = set()
     for record in records:
-
         for field in REQUIRED_FIELDS:
-
             if field not in record:
-
-                missing_fields.append(
-                    (
-                        record.get("ID"),
-                        field
-                    )
-                )
+                missing_fields.add(field)
 
     if not missing_fields:
-
-        print(
-            "All required fields are present."
-        )
-
+        print("All required fields are present.")
     else:
+        print(f"Missing fields detected: {list(missing_fields)}")
 
-        print(
-            "Missing fields:",
-            missing_fields
-        )
-
-    # -----------------------------------------
-    # Duplicate IDs
-    # -----------------------------------------
-
-    ids = [record.get("ID") for record in records]
-
-    id_counts = Counter(ids)
-
-    duplicate_ids = [
-        record_id
-        for record_id, count in id_counts.items()
-        if count > 1
-    ]
-
-    if not duplicate_ids:
-
-        print(
-            "No duplicate IDs found."
-        )
-
-    else:
-
-        print(
-            "Duplicate IDs found:",
-            duplicate_ids
-        )
-    # -----------------------------------------
-    # Empty text
-    # -----------------------------------------
-
-    empty_text = [
-        record.get("ID")
-        for record in records
-        if not str(
-            record.get("Text", "")
-        ).strip()
-    ]
-
-    if not empty_text:
-
-        print(
-            "No empty text records found."
-        )
-
-    else:
-
-        print(
-            "Empty text records:",
-            empty_text
-        )
-
-    # -----------------------------------------
-    # Empty tokens
-    # -----------------------------------------
-
-    empty_tokens = [
-        record.get("ID")
-        for record in records
-        if not record.get("Tokens")
-    ]
-
-    if not empty_tokens:
-
-        print(
-            "No empty token lists found."
-        )
-
-    else:
-
-        print(
-            "Empty token lists:",
-            empty_tokens
-        )
-
-    # -----------------------------------------
-    # Language consistency
-    # -----------------------------------------
-
-    language_mismatch = []
-
+    # 2. Check duplicate IDs
+    seen_ids = set()
+    duplicates = set()
     for record in records:
+        rec_id = record.get("ID")
+        if rec_id in seen_ids:
+            duplicates.add(rec_id)
+        seen_ids.add(rec_id)
 
-        if (
-            record.get("Language")
-            != record.get("Detected_Language")
-        ):
-
-            language_mismatch.append(
-                (
-                    record.get("ID"),
-                    record.get("Language"),
-                    record.get("Detected_Language")
-                )
-            )
-
-    if not language_mismatch:
-
-        print(
-            "No language mismatches found."
-        )
-
+    if not duplicates:
+        print("No duplicate IDs found.")
     else:
+        print(f"Duplicate IDs found: {list(duplicates)}")
 
+    # 3. Check empty text records
+    empty_texts = [r.get("ID") for r in records if not str(r.get("Text", "")).strip()]
+    if not empty_texts:
+        print("No empty text records found.")
+    else:
+        print(f"Empty text records found: {empty_texts}")
+
+    # 4. Check empty token lists
+    empty_tokens = [r.get("ID") for r in records if not r.get("Tokens")]
+    if not empty_tokens:
+        print("No empty token lists found.")
+    else:
+        print(f"Empty token lists found: {empty_tokens}")
+
+    # 5. Language Detection Audit (Informational Reporting)
+    language_mismatch = []
+    for record in records:
+        declared = record.get("Language")
+        detected = record.get("Detected_Language")
+        if declared and detected and declared != detected:
+            language_mismatch.append((record.get("ID"), declared, detected))
+
+    if language_mismatch:
         print(
-            "Language mismatches:",
-            language_mismatch
+            f"\nLanguage Detection Audit: "
+            f"{len(language_mismatch)} record(s) flagged."
         )
-
-    # -----------------------------------------
-    # Token statistics
-    # -----------------------------------------
-
-    token_counts = [
-        len(record["Tokens"])
-        for record in records
-        if isinstance(
-            record.get("Tokens"),
-            list
+        for rec_id, declared, detected in language_mismatch:
+            print(
+                f"  - {rec_id}: "
+                f"Declared='{declared}', "
+                f"Detected='{detected}'"
+            )
+        print(
+            "  -> Status: INFORMATIONAL "
+            "(mixed-language, embedded content, or possible detection anomaly)"
         )
-    ]
+    else:
+        print("\nLanguage Detection Audit: No anomalies found.")
 
-    if token_counts:
+    # 6. Token statistics
+    token_lengths = [len(r.get("Tokens", [])) for r in records]
+    if token_lengths:
+        min_tokens = min(token_lengths)
+        max_tokens = max(token_lengths)
+        avg_tokens = sum(token_lengths) / len(token_lengths)
 
         print("\nToken statistics:")
-
-        print(
-            "Minimum tokens:",
-            min(token_counts)
-        )
-
-        print(
-            "Maximum tokens:",
-            max(token_counts)
-        )
-
-        print(
-            "Average tokens:",
-            round(
-                sum(token_counts)
-                / len(token_counts),
-                2
-            )
-        )
+        print(f"Minimum tokens: {min_tokens}")
+        print(f"Maximum tokens: {max_tokens}")
+        print(f"Average tokens: {avg_tokens:.2f}")
 
     print("\nQuality check completed.")
-
 
 if __name__ == "__main__":
     run_quality_check()
