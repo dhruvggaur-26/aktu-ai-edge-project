@@ -13,6 +13,8 @@ RAW_FILES = [
     {"path": "data/raw/pib_english_raw.jsonl", "type": "jsonl"},
     {"path": "data/raw/pmindia_english_raw.jsonl", "type": "jsonl"},
     {"path": "data/raw/newsonair_english_raw.jsonl", "type": "jsonl"},
+    {"path": "data/raw/lokbhavan_marathi_raw.jsonl", "type": "jsonl"},
+    {"path": "data/raw/mahasamvad_marathi_raw.jsonl", "type": "jsonl"},
 ]
 
 OUTPUT_FILE = Path("data/processed/government_data_combined.jsonl")

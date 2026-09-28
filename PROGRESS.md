@@ -1,7 +1,8 @@
 # Project Progress
 
 ## Project
-AKTU AI Edge Project
+
+SentiEdge AI: An Intelligent Framework for AI-Driven Web Text Mining
 
 ## Current Phase
 
@@ -15,7 +16,7 @@ Module 1 — Data Ingestion Module
 
 ## Objective
 
-The objective of Module 1 is to collect government-related textual data, validate and clean the data, detect language, tokenize the text, and prepare a structured dataset for downstream AI processing.
+The objective of Module 1 is to collect multilingual government-related textual data, validate and clean the data, detect language, tokenize the text, and prepare a structured dataset for downstream AI/NLP processing.
 
 ---
 
@@ -23,192 +24,69 @@ The objective of Module 1 is to collect government-related textual data, validat
 
 ### 1. Raw Data Collection
 
-Government-related textual data was collected from the following sources:
+Government-related textual data has been collected from official online sources including:
 
-- myScheme
 - Press Information Bureau (PIB)
-- PM India
+- Prime Minister of India (PM India)
 - News On AIR
 - DD News
+- MyScheme
 
-The dataset contains both Hindi and English government-related textual records.
+The current dataset contains Hindi and English government-related textual records.
 
-### 2. Dataset Size
-
-The final merged dataset contains:
-
-- Hindi: 500 records
-- English: 400 records
-- Total: 900 records
-
-Source-wise distribution:
-
-- myScheme: 105 records
-- PIB: 250 records
-- PM India: 200 records
-- News On AIR: 200 records
-- DD News: 145 records
-
-### 3. Common Schema
-
-All collected records were normalized into a common schema:
-
-- `ID`
-- `Title`
-- `Text`
-- `Source`
-- `Url`
-- `Language`
-- `Category`
-- `Department`
-- `Date_collected`
-
-### 4. Dataset Merge
-
-All available Hindi and English source datasets were merged into a single standardized dataset.
-
-Output:
-
-`data/processed/government_data_combined.jsonl`
-
-Merge result:
-
-- Total records: **900**
-- Duplicate IDs: **0**
-- Duplicate URLs: **0**
-
-### 5. Data Validation
-
-Common validation checks were implemented for:
-
-- Required fields
-- Duplicate IDs
-- Missing values
-- URL format
-- Date validity
-- Dataset schema consistency
-
-Validation result:
-
-- Required fields: Passed
-- Duplicate IDs: 0
-- Missing values: 0
-- Invalid URLs: 0
-- Invalid dates: 0
-
-### 6. Data Cleaning
-
-A common cleaning pipeline was implemented to:
-
-- Normalize whitespace
-- Normalize spacing around punctuation
-- Remove unnecessary leading/trailing whitespace
-- Preserve the original meaning of the collected text
-
-Output:
-
-`data/processed/government_data_cleaned.jsonl`
-
-Total cleaned records:
-
-**900**
-
-### 7. Language Detection
-
-Automated text-based language detection was implemented using `langdetect`.
-
-The original `Language` field is preserved as the source/collection language classification.
-
-A separate `Detected_Language` field is added for text-based language auditing.
-
-Declared language distribution:
-
-- Hindi (`hi`): 500
-- English (`en`): 400
-
-The language detector flagged 7 records where declared and detected languages differed.
-
-These records are retained and reported as informational audit records because the differences can result from mixed-language content, embedded quotations, or language-detection anomalies.
-
-Output:
-
-`data/processed/government_data_language.jsonl`
-
-### 8. Tokenization
-
-The language-detected dataset was tokenized using the project's Indic tokenizer.
-
-Tokenizer path:
-
-`models/pytorch/indic_ner_final/indic_ner_final`
-
-Tokenization was successfully completed for all 900 records.
-
-Output:
-
-`data/final/government_data_tokenized.jsonl`
-
-Token statistics:
-
-- Minimum tokens: **38**
-- Maximum tokens: **23,356**
-- Average tokens: **661.95**
-
-### 9. Final Quality Check
-
-The final tokenized dataset was checked for:
-
-- Required fields
-- Duplicate IDs
-- Empty text
-- Empty token lists
-- Language detection anomalies
-- Token statistics
-
-Quality check results:
-
-- Total records: **900**
-- Duplicate IDs: **0**
-- Empty text records: **0**
-- Empty token lists: **0**
-- Language detection audit records: **7**
-- Quality check completed successfully
-
-The 7 language-detection differences are treated as **informational audit findings**, not pipeline failures.
+The collected data includes government news, announcements, schemes, scheme-related information, and other government-related textual content.
 
 ---
 
-# Module 1 Data Pipeline
+### 2. Current Dataset Size
+
+The current raw JSONL datasets contain:
+
+- Hindi: **495 records**
+- English: **400 records**
+- Total: **895 records**
+
+#### Hindi Distribution
+
+- PIB: **150**
+- PM India: **100**
+- News On AIR: **100**
+- DD News: **145**
+
+**Hindi Total: 495**
+
+#### English Distribution
+
+- PIB: **100**
+- PM India: **100**
+- News On AIR: **100**
+- MyScheme: **100**
+
+**English Total: 400**
+
+### Additional Existing Dataset
+
+An existing MyScheme Excel dataset is also present:
+
+- `data/raw/government_data_raw.xlsx`
+- Records: **5**
+
+These 5 records are separate from the current 895-record JSONL collection and are included by the merge pipeline when the file is available.
+
+---
+
+### 3. Raw Dataset Files
+
+Current raw datasets include:
 
 ```text
-              Government Sources
-                     |
-       +-------------+-------------+
-       |       |       |      |    |
-   myScheme   PIB   PM India  News On AIR  DD News
-       |       |       |          |          |
-       +-------+-------+----------+----------+
-                     |
-                     v
-               Dataset Merge
-                     |
-                     v
-                900 Records
-                     |
-                     v
-                  Cleaning
-                     |
-                     v
-             Data Validation
-                     |
-                     v
-            Language Detection
-                     |
-                     v
-                Tokenization
-                     |
-                     v
-              Quality Check
-                     |
-                     v
-               Final Dataset
+data/raw/
+├── government_data_raw.xlsx
+├── pib_raw.jsonl
+├── pmindia_hindi_raw.jsonl
+├── newsonair_hindi_raw.jsonl
+├── ddnews_hindi_raw.jsonl
+├── pib_english_raw.jsonl
+├── pmindia_english_raw.jsonl
+├── newsonair_english_raw.jsonl
+└── myscheme_english_raw.jsonl
