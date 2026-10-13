@@ -1,0 +1,293 @@
+{
+  "dataset": "data\\final\\government_data_tokenized.jsonl",
+  "mode": "all",
+  "supported_records": 1202,
+  "successful_outputs": 1202,
+  "empty_outputs": 0,
+  "failure_count": 0,
+  "runtime_seconds": 1175.21,
+  "average_seconds_per_record": 0.978,
+  "languages": {
+    "en": {
+      "records": 394,
+      "non_empty": 394,
+      "empty": 0,
+      "examples": [
+        {
+          "id": "MYSCHEME_EN_001",
+          "title": "Right To Information Fellowship",
+          "phrases": [
+            {
+              "phrase": "Right To Information Fellowship",
+              "score": 0.9578,
+              "type": "concept"
+            },
+            {
+              "phrase": "Information Act",
+              "score": 0.7918,
+              "type": "concept"
+            },
+            {
+              "phrase": "RTI Act",
+              "score": 0.7647,
+              "type": "concept"
+            },
+            {
+              "phrase": "RTI Trainers",
+              "score": 0.7579,
+              "type": "concept"
+            },
+            {
+              "phrase": "short-term fellowships",
+              "score": 0.7449,
+              "type": "concept"
+            }
+          ]
+        },
+        {
+          "id": "MYSCHEME_EN_002",
+          "title": "National Post Doctoral Fellowship",
+          "phrases": [
+            {
+              "phrase": "National Post Doctoral Fellowship",
+              "score": 0.9465,
+              "type": "concept"
+            },
+            {
+              "phrase": "Science and Engineering",
+              "score": 0.7457,
+              "type": "concept"
+            },
+            {
+              "phrase": "Engineering Research Board",
+              "score": 0.7434,
+              "type": "concept"
+            },
+            {
+              "phrase": "Profile Detail",
+              "score": 0.7343,
+              "type": "concept"
+            },
+            {
+              "phrase": "User Profile",
+              "score": 0.7313,
+              "type": "concept"
+            }
+          ]
+        },
+        {
+          "id": "MYSCHEME_EN_003",
+          "title": "Market Development Assistance",
+          "phrases": [
+            {
+              "phrase": "Market Development Assistance",
+              "score": 0.9515,
+              "type": "concept"
+            },
+            {
+              "phrase": "Galvanizing Organic Bio-Agro",
+              "score": 0.7897,
+              "type": "concept"
+            },
+            {
+              "phrase": "Bio-Agro Resources Dhan",
+              "score": 0.7862,
+              "type": "concept"
+            },
+            {
+              "phrase": "organic fertilizers",
+              "score": 0.7826,
+              "type": "concept"
+            },
+            {
+              "phrase": "Organic Bio-Agro Resources",
+              "score": 0.7774,
+              "type": "concept"
+            }
+          ]
+        }
+      ]
+    },
+    "hi": {
+      "records": 506,
+      "non_empty": 506,
+      "empty": 0,
+      "examples": [
+        {
+          "id": "Gov_001",
+          "title": "प्रधानमंत्री सुरक्षा बीमा योजना",
+          "phrases": [
+            {
+              "phrase": "प्रधानमंत्री सुरक्षा बीमा योजना",
+              "score": 0.9566,
+              "type": "entity"
+            },
+            {
+              "phrase": "दुर्घटना बीमा योजना",
+              "score": 0.8274,
+              "type": "concept"
+            },
+            {
+              "phrase": "बीमा कवर",
+              "score": 0.7975,
+              "type": "concept"
+            },
+            {
+              "phrase": "दुर्घटना बीमा आश्वासन",
+              "score": 0.7926,
+              "type": "concept"
+            },
+            {
+              "phrase": "कवरेज वार्षिक प्रीमियम",
+              "score": 0.7673,
+              "type": "concept"
+            }
+          ]
+        },
+        {
+          "id": "Gov_002",
+          "title": "स्टैंड-अप इंडिया",
+          "phrases": [
+            {
+              "phrase": "स्टैंड-अप इंडिया",
+              "score": 0.9376,
+              "type": "concept"
+            },
+            {
+              "phrase": "ग्रीनफील्ड परियोजना उद्यम",
+              "score": 0.7594,
+              "type": "concept"
+            },
+            {
+              "phrase": "अनुसूचित जाति/अनुसूचित जनजाति",
+              "score": 0.7485,
+              "type": "concept"
+            },
+            {
+              "phrase": "लाख रुपये",
+              "score": 0.7364,
+              "type": "concept"
+            },
+            {
+              "phrase": "बैंक शाखा",
+              "score": 0.7207,
+              "type": "concept"
+            }
+          ]
+        },
+        {
+          "id": "Gov_003",
+          "title": "डॉ. एस. राधाकृष्णन यू. जी. सी. पोस्ट-डॉक्टरल फेलोशिप",
+          "phrases": [
+            {
+              "phrase": "पोस्ट-डॉक्टरल फेलोशिप",
+              "score": 0.8486,
+              "type": "concept"
+            }
+          ]
+        }
+      ]
+    },
+    "mr": {
+      "records": 302,
+      "non_empty": 302,
+      "empty": 0,
+      "examples": [
+        {
+          "id": "LokBhavan_MR_001",
+          "title": "27.09.2026: बांबू अर्थव्यवस्थेला चालना देऊन शाश्वत विकास साधावा – राज्यपाल जिष्णु देव वर्मा",
+          "phrases": [
+            {
+              "phrase": "राज्यपाल जिष्णु देव वर्मा",
+              "score": 0.9452,
+              "type": "entity"
+            },
+            {
+              "phrase": "बांबू अर्थव्यवस्थेला चालना",
+              "score": 0.8486,
+              "type": "concept"
+            },
+            {
+              "phrase": "शाश्वत विकास साधावा",
+              "score": 0.8323,
+              "type": "concept"
+            },
+            {
+              "phrase": "देऊन शाश्वत विकास",
+              "score": 0.8219,
+              "type": "concept"
+            },
+            {
+              "phrase": "चालना देऊन शाश्वत",
+              "score": 0.8014,
+              "type": "concept"
+            }
+          ]
+        },
+        {
+          "id": "LokBhavan_MR_002",
+          "title": "25.09.2026: छत्तीसगड व बिहारच्या पत्रकारांनी घेतली राज्यपालांची भेट",
+          "phrases": [
+            {
+              "phrase": "छत्तीसगड व बिहारच्या",
+              "score": 0.8376,
+              "type": "concept"
+            },
+            {
+              "phrase": "राज्यपालांची भेट",
+              "score": 0.8316,
+              "type": "concept"
+            },
+            {
+              "phrase": "बिहारच्या पत्रकारांनी",
+              "score": 0.828,
+              "type": "concept"
+            },
+            {
+              "phrase": "राज्यपाल जिष्णु देव",
+              "score": 0.7682,
+              "type": "entity"
+            },
+            {
+              "phrase": "जिष्णु देव वर्मा",
+              "score": 0.7461,
+              "type": "concept"
+            }
+          ]
+        },
+        {
+          "id": "LokBhavan_MR_003",
+          "title": "25.09.2026: अमिरातीच्या राजदूतांनी घेतली राज्यपालांची भेट",
+          "phrases": [
+            {
+              "phrase": "अमिरातीच्या राजदूतांनी",
+              "score": 0.8503,
+              "type": "concept"
+            },
+            {
+              "phrase": "राज्यपालांची भेट",
+              "score": 0.8256,
+              "type": "concept"
+            },
+            {
+              "phrase": "संयुक्त अरब",
+              "score": 0.7136,
+              "type": "concept"
+            },
+            {
+              "phrase": "अरब अमिरातीचे",
+              "score": 0.6998,
+              "type": "concept"
+            },
+            {
+              "phrase": "नवनियुक्त राजदूत",
+              "score": 0.6682,
+              "type": "concept"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "failures": []
+}

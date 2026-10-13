@@ -1,0 +1,10 @@
+{
+  "input": "data\\final\\government_data_tokenized.jsonl",
+  "output": "data\\processed\\government_data_nlp.jsonl",
+  "total_records": 1202,
+  "successful_records": 1202,
+  "partial_records": 0,
+  "failed_records": 0,
+  "elapsed_seconds": 2686.56,
+  "failures": []
+}

@@ -90,3 +90,61 @@ data/raw/
 ├── pmindia_english_raw.jsonl
 ├── newsonair_english_raw.jsonl
 └── myscheme_english_raw.jsonl
+
+
+---
+
+## Checkpoint - NLP Pipeline Integration
+
+**Date:** 2026-10-13
+
+**Status:** Four-module pipeline integration complete; full dataset run and output validation passed.
+
+### Integrated NLP Modules
+
+- Named Entity Recognition (NER)
+- Semantic Concept Extraction
+- Keyword Extraction (YAKE)
+- Key Phrase Extraction
+
+### Validation Results
+
+- Combined regression suite: **70 tests passed**
+- Real-record smoke tests: English, Hindi, and Marathi all returned successful status
+- Full dataset processed: **1,202 records**
+- Successful records: **1,202**
+- Partial records: **0**
+- Failed records: **0**
+- Output validation: **1,202 valid JSON records**
+- Invalid JSON lines: **0**
+- Records missing NLP results: **0**
+- Records with non-null output from all four modules: **1,202**
+- Full batch runtime: **2,686.56 seconds** (approximately 44 minutes 47 seconds)
+
+### Language Distribution
+
+- Hindi (`hi`): **506 records**
+- English (`en`): **394 records**
+- Marathi (`mr`): **302 records**
+
+### Generated Artifacts
+
+- Processed output: `data/processed/government_data_nlp.jsonl`
+- Batch summary: `reports/pipeline_batch_summary.json`
+- Key phrase validation report: `reports/keyphrases_validation.json`
+
+The processed JSONL is generated output and remains local; it is not included in this checkpoint commit.
+
+### Important Limitations
+
+- Successful processing does not guarantee semantic correctness of every extracted entity, concept, keyword, or phrase; quality evaluation remains necessary.
+- `src/nlp/sentiment.py` does not currently implement actual sentiment analysis.
+- `src/nlp/semantic.py` is currently empty.
+- Sentiment analysis remains a future implementation milestone.
+
+### Next Steps
+
+1. Implement and test actual multilingual sentiment analysis.
+2. Integrate sentiment analysis into the unified pipeline.
+3. Add appropriate pipeline regression tests and regenerate processed output under a new filename.
+4. Continue evaluation of extraction quality.
