@@ -1,0 +1,10 @@
+{
+  "input": "data\\processed\\pipeline_trial_input.jsonl",
+  "output": "data\\processed\\pipeline_trial_output.jsonl",
+  "total_records": 3,
+  "successful_records": 3,
+  "partial_records": 0,
+  "failed_records": 0,
+  "elapsed_seconds": 26.81,
+  "failures": []
+}
