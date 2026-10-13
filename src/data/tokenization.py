@@ -6,7 +6,7 @@ from transformers import AutoTokenizer
 
 INPUT_FILE = "data/processed/government_data_language.jsonl"
 
-MODEL_PATH = "models/pytorch/indic_ner_final/indic_ner_final"
+MODEL_PATH = "models/indic_ner_final"
 
 OUTPUT_FILE = "data/final/government_data_tokenized.jsonl"
 
